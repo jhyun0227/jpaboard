@@ -31,6 +31,8 @@ public class BoardController {
 
     @GetMapping("/list")
     public Page<BoardPageDto> boardPageList(@ModelAttribute BoardSearchCond boardSearchCond) {
+        System.out.println("boardSearchCond.getKind() = " + boardSearchCond.getKind());
+        System.out.println("boardSearchCond.getInputText() = " + boardSearchCond.getInputText());
         return boardService.boardPageList(boardSearchCond);
     }
 

@@ -69,7 +69,7 @@ public class QuerydslBoardRepositoryImpl implements QuerydslBoardRepository {
             return null;
         }
 
-        return board.boardTitle.like(boardTitle);
+        return board.boardTitle.contains(boardTitle);
     }
 
     private BooleanExpression memberNicknameEq(String memberNickname) {
@@ -77,6 +77,6 @@ public class QuerydslBoardRepositoryImpl implements QuerydslBoardRepository {
             return null;
         }
 
-        return board.member.memberNickname.like(memberNickname);
+        return board.member.memberNickname.contains(memberNickname);
     }
 }
