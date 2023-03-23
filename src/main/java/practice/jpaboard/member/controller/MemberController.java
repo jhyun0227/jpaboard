@@ -3,6 +3,7 @@ package practice.jpaboard.member.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import practice.jpaboard.member.dto.MemberDto;
 import practice.jpaboard.member.dto.MemberJoinDto;
@@ -14,6 +15,7 @@ import practice.jpaboard.member.service.MemberService;
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -34,13 +36,13 @@ public class MemberController {
 */
 
     @PostMapping("/join")
-    public Long join(@RequestBody MemberJoinDto memberJoinDto) {
+    public Long join(@Validated @RequestBody MemberJoinDto memberJoinDto) {
         Long memberId = memberService.joinMember(memberJoinDto);
         return memberId;
     }
 
     @GetMapping("/login")
-    public Long login(@RequestBody MemberLoginDto memberLoginDto, HttpServletRequest httpServletRequest) {
+    public Long login(@Validated @RequestBody MemberLoginDto memberLoginDto, HttpServletRequest httpServletRequest) {
         Member member = memberService.login(memberLoginDto);
 
 //        세션이 있으면 세션 반환, 없으면 신규 세션 생성
