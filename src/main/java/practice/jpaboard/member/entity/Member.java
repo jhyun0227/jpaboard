@@ -1,11 +1,11 @@
 package practice.jpaboard.member.entity;
 
 import lombok.*;
+import practice.jpaboard.board.entity.Board;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -19,4 +19,7 @@ public class Member {
     private String memberLoginId;
     private String memberPassword;
     private String memberNickname;
+
+    @OneToMany(mappedBy = "member")
+    private List<Board> boards = new ArrayList<>();
 }
