@@ -2,12 +2,14 @@ package practice.jpaboard.board.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import practice.jpaboard.board.dto.BoardAddDto;
 import practice.jpaboard.board.dto.BoardDetailDto;
 import practice.jpaboard.board.dto.BoardPageDto;
 import practice.jpaboard.board.dto.BoardSearchCond;
 import practice.jpaboard.board.service.BoardService;
+import practice.jpaboard.security.auth.UserDetailsImpl;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
@@ -20,8 +22,8 @@ public class BoardController {
     private final BoardService boardService;
 
     @PostMapping("/add")
-    public Long addBoard(@RequestBody BoardAddDto boardAddDto) {
-        return boardService.addBoard(boardAddDto);
+    public Long addBoard(@RequestBody BoardAddDto boardAddDto, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return boardService.addBoard(boardAddDto, userDetails);
     }
 
     @GetMapping("/{boardId}")

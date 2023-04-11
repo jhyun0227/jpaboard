@@ -130,6 +130,9 @@ public class JwtTokenProvider implements InitializingBean {
         String memberLoginId = claims.get(SecurityProperties.MEMBER_LOGIN_ID).toString();
         UserDetails userDetails = userDetailsService.loadUserByUsername(memberLoginId);
 
+        log.info("memberLoginId = {}", memberLoginId);
+        log.info("userDetails = {}", userDetails.toString());
+
         //비밀번호는 Authentication 객체에 넣을 필요 없다.
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }

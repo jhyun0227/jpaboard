@@ -1,5 +1,5 @@
 package practice.jpaboard.member.entity;
 
 public enum Role {
-    MEMBER, ADMIN
+    ROLE_MEMBER, ROLE_ADMIN
 }

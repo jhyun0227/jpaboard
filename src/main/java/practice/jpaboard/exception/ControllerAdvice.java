@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import practice.jpaboard.exception.board.BoardException;
 import practice.jpaboard.exception.member.MemberException;
-import practice.jpaboard.exception.security.SecurityException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,15 +57,5 @@ public class ControllerAdvice {
         errorBody.put("message", message);
 
         return ResponseEntity.status(e.getBoardError().getHttpStatus()).body(errorBody);
-    }
-
-    @ExceptionHandler(SecurityException.class)
-    public ResponseEntity<Map<String, String>> securityException(SecurityException e) {
-        Map<String, String> errorBody = new HashMap<>();
-
-        String message = e.getSecurityError().getMessage();
-        errorBody.put("message", message);
-
-        return ResponseEntity.status(e.getSecurityError().getHttpStatus()).body(errorBody);
     }
 }

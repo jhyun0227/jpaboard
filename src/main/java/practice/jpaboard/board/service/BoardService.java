@@ -18,6 +18,7 @@ import practice.jpaboard.exception.member.MemberError;
 import practice.jpaboard.exception.member.MemberException;
 import practice.jpaboard.member.entity.Member;
 import practice.jpaboard.member.repository.MemberRepository;
+import practice.jpaboard.security.auth.UserDetailsImpl;
 
 import java.util.stream.Stream;
 
@@ -30,8 +31,8 @@ public class BoardService {
     private final BoardRepository boardRepository;
     private final MemberRepository memberRepository;
 
-    public Long addBoard(BoardAddDto boardAddDto) {
-        Member findMember = memberRepository.findById(boardAddDto.getMemberId())
+    public Long addBoard(BoardAddDto boardAddDto, UserDetailsImpl userDetailsImpl) {
+        Member findMember = memberRepository.findByMemberLoginId(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new MemberException(MemberError.NOT_EXIST_MEMBER));
 
         Board board = Board.builder()

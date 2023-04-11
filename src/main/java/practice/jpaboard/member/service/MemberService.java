@@ -39,7 +39,7 @@ public class MemberService {
                 .memberLoginId(memberJoinDto.getMemberLoginId())
                 .memberPassword(encodedPassword)
                 .memberNickname(memberJoinDto.getMemberNickname())
-                .role(Role.MEMBER)
+                .role(Role.ROLE_MEMBER)
                 .build();
 
         memberRepository.save(member);

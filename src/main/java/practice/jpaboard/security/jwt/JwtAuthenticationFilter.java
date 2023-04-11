@@ -7,10 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
-import practice.jpaboard.exception.security.SecurityError;
-import practice.jpaboard.exception.security.SecurityException;
 
-import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -31,16 +28,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             if (accessToken != null && jwtTokenProvider.validateAccessToken(accessToken)) {
+
                 Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.debug("JwtAuthentication.doFilterInternal - Save Authentication In SecurityContext");
+                log.info("JwtAuthentication.doFilterInternal - Save Authentication In SecurityContext");
+
             }
         } catch (IncorrectClaimException e) {
             SecurityContextHolder.clearContext();
-            throw new SecurityException(SecurityError.INCORRECT_CLAIM);
+            response.sendError(403, "유효하지 않은 토큰입니다.");
         } catch (UsernameNotFoundException e) {
             SecurityContextHolder.clearContext();
-            throw new SecurityException(SecurityError.USERNAME_NOT_FOUND_EXCEPTION);
+            response.sendError(403, "존재하지 않는 회원입니다.");
         }
 
         filterChain.doFilter(request, response);
@@ -51,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     private String resolveToken(HttpServletRequest httpServletRequest) {
         String bearerToken = httpServletRequest.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("bearer ")) {
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
 

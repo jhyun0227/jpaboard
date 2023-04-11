@@ -33,6 +33,7 @@ public class MemberLoginService {
                 = new UsernamePasswordAuthenticationToken(memberLoginDto.getMemberLoginId(), memberLoginDto.getMemberPassword());
 
         //UserDetailsService.loadUserByUsername() 호출
+        //인증의 역할만 한다.
         Authentication authenticate = authenticationManager.authenticate(authenticationToken);
 
 //        SecurityContextHolder.getContext().setAuthentication(authenticate);
