@@ -71,7 +71,7 @@ public class JwtTokenProvider implements InitializingBean {
                 .signWith(signingKey, SignatureAlgorithm.HS512)
                 .compact();
 
-        return new TokenDto("Bearer " + accessToken, refreshToken);
+        return new TokenDto(accessToken, refreshToken);
     }
 
     /**

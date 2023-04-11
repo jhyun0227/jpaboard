@@ -14,6 +14,7 @@ import practice.jpaboard.member.service.MemberService;
 import practice.jpaboard.security.auth.UserDetailsImpl;
 import practice.jpaboard.security.jwt.TokenDto;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 @Slf4j
@@ -31,8 +32,10 @@ public class MemberController {
     }
 
     @GetMapping("/login")
-    public TokenDto login(@Validated @RequestBody MemberLoginDto memberLoginDto) {
-        return memberLoginService.login(memberLoginDto);
+    public TokenDto login(@Validated @RequestBody MemberLoginDto memberLoginDto, HttpServletResponse httpServletResponse) {
+        TokenDto token = memberLoginService.login(memberLoginDto);
+        httpServletResponse.addHeader("Authorization", "Bearer " + token.getAccessToken());
+        return token;
     }
 
 
