@@ -20,6 +20,9 @@ public class Member {
     private String memberPassword;
     private String memberNickname;
 
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
     @OneToMany(mappedBy = "member")
     private List<Board> boards = new ArrayList<>();
 }
