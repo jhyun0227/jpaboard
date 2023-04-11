@@ -2,7 +2,6 @@ package practice.jpaboard.board.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import practice.jpaboard.board.dto.BoardAddDto;
@@ -14,9 +13,7 @@ import practice.jpaboard.security.auth.UserDetailsImpl;
 import practice.jpaboard.util.dto.ResponseDto;
 import practice.jpaboard.util.dto.StatusCode;
 
-import javax.annotation.PostConstruct;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController

@@ -14,8 +14,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        response.setCharacterEncoding("UTF-8");
-        response.sendError(401, "잘못된 접근입니다. 로그인을 해주세요.");
+        response.sendError(401);
 
         //내가 만든 RuntimeException을 발생시키려했지만 좋지 않은 방법
 //        throw new SecurityException(SecurityError.JWT_AUTHENTICATION_ENTRY_POINT);

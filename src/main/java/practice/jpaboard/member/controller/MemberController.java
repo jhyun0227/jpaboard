@@ -2,9 +2,6 @@ package practice.jpaboard.member.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import practice.jpaboard.member.dto.MemberDto;
@@ -12,7 +9,6 @@ import practice.jpaboard.member.dto.MemberJoinDto;
 import practice.jpaboard.member.dto.MemberLoginDto;
 import practice.jpaboard.member.service.MemberLoginService;
 import practice.jpaboard.member.service.MemberService;
-import practice.jpaboard.security.auth.UserDetailsImpl;
 import practice.jpaboard.security.jwt.TokenDto;
 import practice.jpaboard.util.dto.ResponseDto;
 import practice.jpaboard.util.dto.StatusCode;
