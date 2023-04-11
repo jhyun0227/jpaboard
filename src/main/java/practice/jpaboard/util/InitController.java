@@ -29,15 +29,6 @@ public class InitController {
             memberJoinDto.setMemberNickname("test" + i);
 
             Long memberId = memberService.joinMember(memberJoinDto);
-            Member member = memberRepository.findById(memberId).get();
-
-            Board board = Board.builder()
-                    .boardTitle("test board" + i)
-                    .boardContent("test board" + i)
-                    .member(member)
-                    .build();
-
-            boardRepository.save(board);
         }
     }
 }

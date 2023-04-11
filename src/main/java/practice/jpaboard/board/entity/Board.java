@@ -5,7 +5,6 @@ import practice.jpaboard.member.entity.Member;
 import practice.jpaboard.util.entity.BaseEntity;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Getter

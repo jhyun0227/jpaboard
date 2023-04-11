@@ -50,4 +50,9 @@ public class UserDetailsImpl implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+    //Auditing을 위해 추가
+    public String getMemberNickname() {
+        return member.getMemberNickname();
+    }
 }
