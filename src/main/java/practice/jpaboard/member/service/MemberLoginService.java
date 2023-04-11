@@ -49,6 +49,8 @@ public class MemberLoginService {
 
     /**
      * Authentication 객체에서 권한을 가져오는 메서드
+     * 이건 솔직히 왜필요한지 모르겠네..
+     * 어차피 Filter에서는 memberId만 쓰는데 말이야...
      */
     public String getAuthorities(Authentication authentication) {
         return authentication.getAuthorities().iterator().next().getAuthority();
