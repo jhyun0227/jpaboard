@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import practice.jpaboard.member.service.RedisService;
 import practice.jpaboard.security.SecurityProperties;
 import practice.jpaboard.security.auth.UserDetailsImpl;
 
@@ -24,16 +25,19 @@ import java.util.Date;
 @Transactional(readOnly = true)
 public class JwtTokenProvider implements InitializingBean {
     private final UserDetailsService userDetailsService;
+    private final RedisService redisService;
     private final String secretKey;
     private static Key signingKey;
     private final Long accessTokenValidityInMilliseconds;
     private final Long refreshTokenValidityInMilliseconds;
 
     public JwtTokenProvider(UserDetailsService userDetailsService,
+                            RedisService redisService,
                             @Value("${jwt.secret}") String secretKey,
                             @Value("${jwt.access-token-validity-in-seconds}") Long accessTokenValidityInSeconds,
                             @Value("${jwt.refresh-token-validity-in-seconds}") Long refreshTokenValidityInSeconds) {
         this.userDetailsService = userDetailsService;
+        this.redisService = redisService;
         this.secretKey = secretKey;
         this.accessTokenValidityInMilliseconds = accessTokenValidityInSeconds * 1000;
         this.refreshTokenValidityInMilliseconds = refreshTokenValidityInSeconds * 1000;

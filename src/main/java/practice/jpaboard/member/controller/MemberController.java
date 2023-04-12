@@ -2,6 +2,9 @@ package practice.jpaboard.member.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpCookie;
+import org.springframework.http.ResponseCookie;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import practice.jpaboard.member.dto.MemberDto;
@@ -27,6 +30,9 @@ public class MemberController {
     private final MemberService memberService;
     private final MemberLoginService memberLoginService;
 
+    @Value("${jwt.refresh-token-validity-in-seconds}")
+    private Long refreshTokenValidityInSeconds;
+
     @PostMapping("/join")
     public ResponseDto<Map<String, Long>> join(@Validated @RequestBody MemberJoinDto memberJoinDto) {
         Long memberId = memberService.joinMember(memberJoinDto);
@@ -41,6 +47,7 @@ public class MemberController {
     public ResponseDto<TokenDto> login(@Validated @RequestBody MemberLoginDto memberLoginDto, HttpServletResponse httpServletResponse) {
         TokenDto token = memberLoginService.login(memberLoginDto);
 
+        //AccessToken 헤더 저장
         httpServletResponse.addHeader("Authorization", "Bearer " + token.getAccessToken());
 
         return new ResponseDto<>(StatusCode.SUCCESS, token, "정상적으로 로그인 되었습니다.", null);
