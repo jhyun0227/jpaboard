@@ -9,11 +9,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import practice.jpaboard.member.dto.MemberLoginDto;
 import practice.jpaboard.security.SecurityProperties;
+import practice.jpaboard.security.auth.UserDetailsImpl;
 import practice.jpaboard.security.jwt.JwtTokenProvider;
 import practice.jpaboard.security.jwt.TokenDto;
 
+import java.util.Date;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,6 +31,7 @@ public class MemberLoginService {
 
     /**
      * 로그인한 사용자에게 토큰을 발급하는 메서드
+     * 1. Refresh Token을 Redis에 저장한다.
      */
     public TokenDto login(MemberLoginDto memberLoginDto) {
         UsernamePasswordAuthenticationToken authenticationToken
@@ -44,10 +48,39 @@ public class MemberLoginService {
     }
 
     /**
+     * 로그아웃 메서드
+     * 1. Redis에서 Refresh Token 삭제
+     * 2. Redis에 AccessToken을 key 값으로 'logout'을 value 값으로 등록 만료시간도 함께 저장
+     */
+    public void logout(String accessToken, String refreshToken) {
+        //1. accessToken으로 authentication 조회
+        String resolveAccessToken = resolveAccessToken(accessToken);
+        Authentication authentication = jwtTokenProvider.getAuthentication(resolveAccessToken);
+        UserDetailsImpl userDetailsImpl = (UserDetailsImpl) authentication.getPrincipal();
+        String memberLoginId = userDetailsImpl.getUsername();
+
+        //2. redis에서 Refresh Token 삭제
+        String refreshTokenInRedis
+                = redisService.getValues("RT(" + SecurityProperties.SERVER + "):" + memberLoginId);
+
+        if (refreshTokenInRedis != null) {
+            redisService.deleteValues("RT(" + SecurityProperties.SERVER + "):" + memberLoginId);
+        }
+
+        //3. redis에 Access Token 저장 with 만료시간
+        //Redis 만료시간 = 토큰 만료까지 남은 시간 - 현재 시간
+        long expiration = jwtTokenProvider.getTokenExpirationTime(resolveAccessToken) - new Date().getTime();
+        redisService.setValuesWithTimeout(resolveAccessToken,
+                "logout",
+                expiration);
+    }
+
+    /**
      * Token을 발급하는 메서드
      */
     public TokenDto generateToken(String provider, String memberLoginId, String authority) {
         //RefreshToken이 Redis에 있을 경우
+        //다른 기기에서 로그인하면..?
         if (redisService.getValues("RT(" + provider + "):" + memberLoginId) != null) {
             redisService.deleteValues("RT(" + provider + "):" + memberLoginId);
         }
@@ -60,8 +93,9 @@ public class MemberLoginService {
 
     /**
      * AccessToken을 재발급하는 메서드
-     * accessTokenValidate() 메서드가 true를 반환할 경우에 사용한다.
-     * AccessToken과 RefreshToken을 재발급
+     * 1. Refresh Token이 유효한지 우선 조회
+     * 2. Refresh Token이 유효하다면 Access Token만 재발급한다.
+     * 3. Refresh Token이 유효하지 않거나 만료되었다면, 재로그인을 유도한다.
      */
     public TokenDto reissueToken(String accessToken, String refreshToken) {
         String resolveAccessToken = resolveAccessToken(accessToken);

@@ -1,16 +1,21 @@
 package practice.jpaboard.security.jwt;
 
 import io.jsonwebtoken.IncorrectClaimException;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import practice.jpaboard.security.SecurityProperties;
+import practice.jpaboard.util.dto.ResponseDto;
+import practice.jpaboard.util.dto.StatusCode;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -32,6 +37,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
          * 만약 토큰 검증이 되지 않으면 SecurityContext에 authentication 객체가 없기 때문에
          * 엄밀히 말하면 SecurityContextHolder에 해당 요청에 대한 SecurityContext가 없기때문에
          * 해당 리소스에 접근하려하면 자동으로 반환한다.
+         *
+         * 유효 기간 만료를 제외한 예외는 false를 반환하도록 한다. (Slient Refresh)
          */
         try {
             if (accessToken != null && jwtTokenProvider.validateAccessToken(accessToken)) {
@@ -44,12 +51,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 //Invalidate SecurityContext
                 SecurityContextHolder.clearContext();
             }
-        } catch (IncorrectClaimException e) {
+        } catch (IncorrectClaimException e) { // 잘못된 토큰일 경우
             SecurityContextHolder.clearContext();
-            response.sendError(403, "유효하지 않은 토큰입니다.");
-        } catch (UsernameNotFoundException e) {
+            log.debug("Invalid JWT token.");
+            response.sendError(403);
+        } catch (UsernameNotFoundException e) { // 회원을 찾을 수 없을 경우
             SecurityContextHolder.clearContext();
-            response.sendError(403, e.getMessage());
+            log.debug("Can't find user.");
+            response.sendError(403);
         }
 
         filterChain.doFilter(request, response);

@@ -79,7 +79,7 @@ public class JwtTokenProvider implements InitializingBean {
 
     /**
      * AuthenticationFilter에서 토큰이 유효한지 확인하기 위한 메서드
-     * AccessToken
+     * Silent Refresh를 위해서 만료된 토큰도 일단 반환한다.
      */
     public boolean validateAccessToken(String accessToken) {
         try {
@@ -87,6 +87,7 @@ public class JwtTokenProvider implements InitializingBean {
                     && redisService.getValues(accessToken).equals("logout")) {
                 return false;
             }
+
             Jwts.parserBuilder()
                     .setSigningKey(signingKey)
                     .build()
@@ -95,9 +96,14 @@ public class JwtTokenProvider implements InitializingBean {
             return true;
         } catch (ExpiredJwtException e) {
             return true;
-        } catch (Exception e) {
+        }
+
+        /*
+        catch (Exception e) {
+
             return false;
         }
+        */
     }
 
     /**
@@ -158,12 +164,19 @@ public class JwtTokenProvider implements InitializingBean {
             Claims claims = getClaims(accessToken);
             Date expirationDate = claims.getExpiration();
 
+            //만료시간이 현재시간보다 이전인지 확인하는 로직
+            //만료시간이 현재시간보다 과거이면 true
+            //만료시간이 현재시간보다 미래이면 false
             return expirationDate.before(new Date());
         } catch(ExpiredJwtException e) {
             return true;
-        } catch (Exception e) {
+        }
+
+        /*
+        catch (Exception e) {
             return false;
         }
+        */
     }
 
     /**
@@ -189,7 +202,4 @@ public class JwtTokenProvider implements InitializingBean {
             return e.getClaims();
         }
     }
-
-
-
 }
