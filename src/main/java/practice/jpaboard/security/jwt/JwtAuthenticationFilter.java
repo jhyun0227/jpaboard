@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
+import practice.jpaboard.security.SecurityProperties;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -26,6 +27,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         //Access Token 추출
         String accessToken = resolveToken(request);
 
+        /**
+         * 인증이 되어 SecurityContextHolder에 SecurityContext가 담기게 된다.
+         * 만약 토큰 검증이 되지 않으면 SecurityContext에 authentication 객체가 없기 때문에
+         * 엄밀히 말하면 SecurityContextHolder에 해당 요청에 대한 SecurityContext가 없기때문에
+         * 해당 리소스에 접근하려하면 자동으로 반환한다.
+         */
         try {
             if (accessToken != null && jwtTokenProvider.validateAccessToken(accessToken)) {
 
@@ -33,13 +40,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 log.info("JwtAuthentication.doFilterInternal - Save Authentication In SecurityContext");
 
+            } else {
+                //Invalidate SecurityContext
+                SecurityContextHolder.clearContext();
             }
         } catch (IncorrectClaimException e) {
             SecurityContextHolder.clearContext();
             response.sendError(403, "유효하지 않은 토큰입니다.");
         } catch (UsernameNotFoundException e) {
             SecurityContextHolder.clearContext();
-            response.sendError(403, "존재하지 않는 회원입니다.");
+            response.sendError(403, e.getMessage());
         }
 
         filterChain.doFilter(request, response);
@@ -48,7 +58,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     /**
      * header에서 Token을 가져오는 메서드
      */
-    private String resolveToken(HttpServletRequest httpServletRequest) {
+    public String resolveToken(HttpServletRequest httpServletRequest) {
         String bearerToken = httpServletRequest.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);

@@ -2,6 +2,8 @@ package practice.jpaboard.board.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import practice.jpaboard.board.dto.BoardAddDto;
@@ -24,27 +26,36 @@ public class BoardController {
     private final BoardService boardService;
 
     @PostMapping("/add")
-    public ResponseDto<Map<String, Long>> addBoard(@RequestBody BoardAddDto boardAddDto, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<?> addBoard(@RequestBody BoardAddDto boardAddDto, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         Long boardId = boardService.addBoard(boardAddDto, userDetails);
 
         HashMap<String, Long> data = new HashMap<>();
         data.put("boastId", boardId);
 
-        return new ResponseDto<>(StatusCode.SUCCESS, data, "정상적으로 작성되었습니다.", null);
+        ResponseDto<?> result
+                = ResponseDto.successDto(StatusCode.SUCCESS, data, "정상적으로 작성되었습니다.");
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @GetMapping("/{boardId}")
-    public ResponseDto<BoardDetailDto> boardDetail(@PathVariable Long boardId) {
+    public ResponseEntity<?> boardDetail(@PathVariable Long boardId) {
         BoardDetailDto boardDetailDto = boardService.boardDetail(boardId);
 
-        return new ResponseDto<>(StatusCode.SUCCESS, boardDetailDto, "정상 조회", null);
+        ResponseDto<?> result
+                = ResponseDto.successDto(StatusCode.SUCCESS, boardDetailDto, "정상 조회 되었습니다.");
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @GetMapping("/list")
-    public ResponseDto<Page<BoardPageDto>> boardPageList(@ModelAttribute BoardSearchCond boardSearchCond) {
+    public ResponseEntity<?> boardPageList(@ModelAttribute BoardSearchCond boardSearchCond) {
         Page<BoardPageDto> boardPageDtos = boardService.boardPageList(boardSearchCond);
 
-        return new ResponseDto<>(StatusCode.SUCCESS, boardPageDtos, "정상 조회", null);
+        ResponseDto<?> result
+                = ResponseDto.successDto(StatusCode.SUCCESS, boardPageDtos, "정상 조회 되었습니다.");
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
 }

@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import practice.jpaboard.exception.board.BoardException;
 import practice.jpaboard.exception.member.MemberException;
+import practice.jpaboard.util.dto.ResponseDto;
+import practice.jpaboard.util.dto.StatusCode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +19,7 @@ import java.util.Map;
 public class ControllerAdvice {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> methodArgumentNotValidException(MethodArgumentNotValidException e) {
+    public ResponseEntity<?> methodArgumentNotValidException(MethodArgumentNotValidException e) {
         Map<String, String> errorBody = new HashMap<>();
 
         e.getBindingResult().getAllErrors()
@@ -36,26 +38,35 @@ public class ControllerAdvice {
         log.info("e.getStackTrace() = {}", e.getStackTrace());
         */
 
-        return ResponseEntity.badRequest().body(errorBody);
+        ResponseDto<?> result
+                = ResponseDto.failDto(StatusCode.FAIL, errorBody, "예외 발생");
+
+        return ResponseEntity.badRequest().body(result);
     }
 
     @ExceptionHandler(MemberException.class)
-    public ResponseEntity<Map<String, String>> memberException(MemberException e) {
-        Map<String, String> errorBody = new HashMap<>();
+    public ResponseEntity<?> memberException(MemberException e) {
 
+        Map<String, String> errorBody = new HashMap<>();
         String message = e.getMemberError().getMessage();
         errorBody.put("message", message);
 
-        return ResponseEntity.status(e.getMemberError().getHttpStatus()).body(errorBody);
+        ResponseDto<?> result
+                = ResponseDto.failDto(StatusCode.FAIL, errorBody, "예외 발생");
+
+        return ResponseEntity.status(e.getMemberError().getHttpStatus()).body(result);
     }
 
     @ExceptionHandler(BoardException.class)
-    public ResponseEntity<Map<String, String>> memberException(BoardException e) {
-        Map<String, String> errorBody = new HashMap<>();
+    public ResponseEntity<?> memberException(BoardException e) {
 
+        Map<String, String> errorBody = new HashMap<>();
         String message = e.getBoardError().getMessage();
         errorBody.put("message", message);
 
-        return ResponseEntity.status(e.getBoardError().getHttpStatus()).body(errorBody);
+        ResponseDto<?> result
+                = ResponseDto.failDto(StatusCode.FAIL, errorBody, "예외 발생");
+
+        return ResponseEntity.status(e.getBoardError().getHttpStatus()).body(result);
     }
 }

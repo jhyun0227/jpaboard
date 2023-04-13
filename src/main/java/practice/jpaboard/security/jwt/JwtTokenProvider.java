@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import practice.jpaboard.member.service.RedisService;
 import practice.jpaboard.security.SecurityProperties;
-import practice.jpaboard.security.auth.UserDetailsImpl;
 
 import java.security.Key;
 import java.util.Date;
@@ -79,10 +78,15 @@ public class JwtTokenProvider implements InitializingBean {
     }
 
     /**
-     * AuthenticationFilter에서 토큰을 검증하기 위한 메서드
+     * AuthenticationFilter에서 토큰이 유효한지 확인하기 위한 메서드
+     * AccessToken
      */
     public boolean validateAccessToken(String accessToken) {
         try {
+            if (redisService.getValues(accessToken) != null //NPE방지
+                    && redisService.getValues(accessToken).equals("logout")) {
+                return false;
+            }
             Jwts.parserBuilder()
                     .setSigningKey(signingKey)
                     .build()
@@ -96,8 +100,14 @@ public class JwtTokenProvider implements InitializingBean {
         }
     }
 
+    /**
+     * RefreshToken이 유효한지 확인하는 메서드
+     */
     public boolean validateRefreshToken(String refreshToken) {
         try {
+            if (redisService.getValues(refreshToken).equals("delete")) {
+                return false;
+            }
             Jwts.parserBuilder()
                     .setSigningKey(signingKey)
                     .build()
@@ -125,13 +135,11 @@ public class JwtTokenProvider implements InitializingBean {
      * SecurityContext에 저장할 Authentication 객체를 반환하는 메서드
      */
     public Authentication getAuthentication(String accessToken) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(signingKey)
-                .build()
-                .parseClaimsJws(accessToken)
-                .getBody();
-
+        //토큰에서 claim을 추출
+        Claims claims = getClaims(accessToken);
         String memberLoginId = claims.get(SecurityProperties.MEMBER_LOGIN_ID).toString();
+
+        //토큰에 보관되어있던 memberLoginId를 이용해 UserDetails를 얻는다.
         UserDetails userDetails = userDetailsService.loadUserByUsername(memberLoginId);
 
         log.info("memberLoginId = {}", memberLoginId);
@@ -142,28 +150,14 @@ public class JwtTokenProvider implements InitializingBean {
     }
 
     /**
-     * 토큰으로부터 유효기간을 조회
+     * 토큰의 유효기간을 확인하는 메서드
+     * 유효기간만 만료된 유효한 토큰일 경우 true 반환
      */
-    public long getTokenExpirationTime(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(signingKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
-        return claims.getExpiration().getTime();
-    }
-
-    // 재발급 검증 API에서 사용
     public boolean validateAccessTokenOnlyExpired(String accessToken) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(signingKey)
-                    .build()
-                    .parseClaimsJws(accessToken)
-                    .getBody();
-
+            Claims claims = getClaims(accessToken);
             Date expirationDate = claims.getExpiration();
+
             return expirationDate.before(new Date());
         } catch(ExpiredJwtException e) {
             return true;
@@ -171,5 +165,31 @@ public class JwtTokenProvider implements InitializingBean {
             return false;
         }
     }
+
+    /**
+     * 토큰으로부터 유효기간을 조회
+     */
+    public long getTokenExpirationTime(String token) {
+        Claims claims = getClaims(token);
+
+        return claims.getExpiration().getTime();
+    }
+
+    /**
+     * 토큰으로 부터 Claim을 추출하는 메서드
+     */
+    public Claims getClaims(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(signingKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (ExpiredJwtException e) {
+            return e.getClaims();
+        }
+    }
+
+
 
 }
