@@ -40,7 +40,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
          * 엄밀히 말하면 SecurityContextHolder에 해당 요청에 대한 SecurityContext가 없기때문에
          * 해당 리소스에 접근하려하면 자동으로 반환한다.
          *
-         * 유효 기간 만료를 제외한 예외는 false를 반환하도록 한다. (Slient Refresh)
          */
         try {
             if (StringUtils.hasText(accessToken) && jwtTokenProvider.validateAccessToken(accessToken)) {
@@ -48,20 +47,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 log.info("JwtAuthentication.doFilterInternal - Save Authentication In SecurityContext");
-            }
-
-            /*
-            else {
+            } else {
                 //Invalidate SecurityContext
                 SecurityContextHolder.clearContext();
             }
-            */
         } catch (ExpiredJwtException e) { //만료된 토큰일 경우
             SecurityContextHolder.clearContext();
-            request.setAttribute("Exception", "ExpiredJwtException");
+            request.setAttribute("exception", "ExpiredJwtException");
+            request.setAttribute("message", "만료된 토큰입니다. redirect = " + "/reissue");
         } catch (JwtException e) { // 회원을 찾을 수 없을 경우
             SecurityContextHolder.clearContext();
-            request.setAttribute("Exception", "JwtException");
+            request.setAttribute("exception", "JwtException");
+            request.setAttribute("message", "유효하지 않은 토큰입니다. 다시 로그인해주세요. redirect = " + "/login");
+        } catch (UsernameNotFoundException e) {
+            SecurityContextHolder.clearContext();
+            request.setAttribute("exception", "UsernameNotFoundException");
+            request.setAttribute("message", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

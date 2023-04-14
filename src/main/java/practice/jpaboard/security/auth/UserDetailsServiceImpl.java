@@ -19,7 +19,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String memberLoginId) throws UsernameNotFoundException {
         Member member = memberRepository.findByMemberLoginId(memberLoginId)
-                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 회원입니다. 아이디를 확인해주세요."));
+                .orElseThrow(() -> new UsernameNotFoundException("가입하지 않은 회원이거나, 탈퇴한 회원입니다. redirect = " + "/join"));
 
         if (member != null) {
             return new UserDetailsImpl(member);

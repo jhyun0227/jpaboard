@@ -17,22 +17,19 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        String exception = (String) request.getAttribute("Exception");
+        String exception = (String) request.getAttribute("exception");
+        String message = (String) request.getAttribute("message");
 
         if (!StringUtils.hasText(exception)) {
-            setResponse(response, "로그아웃 된 회원입니다. Redirection = " + "/login");
-        } else if (exception.equals("ExpiredJwtException")) {
-            setResponse(response, "만료된 토큰입니다. Redirection = " + "/reissue");
-        } else if (exception.equals("JwtException")) {
             setResponse(response, "유효하지 않은 토큰입니다. Redirection = " + "/login");
         }
 
-
-
+        setResponse(response, message);
     }
 
     private void setResponse(HttpServletResponse response, String message) throws IOException {
-        response.setContentType("application/json;charset=UTF-8");
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
         response.setStatus(401);
 
         ResponseDto<?> result =
