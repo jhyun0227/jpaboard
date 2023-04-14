@@ -52,10 +52,10 @@ public class JwtTokenProvider implements InitializingBean {
     /**
      * 로그인 인증이 끝난 후 반환할 Token Dto
      */
-    public TokenDto createToken(String memberLoginId, String authority) {
+    public String createAccessToken(String memberLoginId, String authority) {
         Long now = System.currentTimeMillis();
 
-        String accessToken = Jwts.builder()
+        return Jwts.builder()
                 .setHeaderParam("typ", "JWT")
                 .setHeaderParam("alg", "HS512")
                 .setExpiration(new Date(now + accessTokenValidityInMilliseconds))
@@ -65,16 +65,18 @@ public class JwtTokenProvider implements InitializingBean {
                 .claim(SecurityProperties.AUTHORITY_KEY, authority)
                 .signWith(signingKey, SignatureAlgorithm.HS512)
                 .compact();
+    }
 
-        String refreshToken = Jwts.builder()
+    public String createRefreshToken() {
+        Long now = System.currentTimeMillis();
+
+        return Jwts.builder()
                 .setHeaderParam("typ", "JWT")
                 .setHeaderParam("alg", "HS512")
                 .setExpiration(new Date(now + refreshTokenValidityInMilliseconds))
                 .setSubject("refreshToken")
                 .signWith(signingKey, SignatureAlgorithm.HS512)
                 .compact();
-
-        return new TokenDto(accessToken, refreshToken);
     }
 
     /**
@@ -82,28 +84,17 @@ public class JwtTokenProvider implements InitializingBean {
      * Silent Refresh를 위해서 만료된 토큰도 일단 반환한다.
      */
     public boolean validateAccessToken(String accessToken) {
-        try {
-            if (redisService.getValues(accessToken) != null //NPE방지
-                    && redisService.getValues(accessToken).equals("logout")) {
-                return false;
-            }
-
-            Jwts.parserBuilder()
-                    .setSigningKey(signingKey)
-                    .build()
-                    .parseClaimsJws(accessToken);
-
-            return true;
-        } catch (ExpiredJwtException e) {
-            return true;
-        }
-
-        /*
-        catch (Exception e) {
-
+        if (redisService.getValues(accessToken) != null //NPE방지
+                && redisService.getValues(accessToken).equals("logout")) {
             return false;
         }
-        */
+
+        Jwts.parserBuilder()
+                .setSigningKey(signingKey)
+                .build()
+                .parseClaimsJws(accessToken);
+
+        return true;
     }
 
     /**
@@ -111,9 +102,6 @@ public class JwtTokenProvider implements InitializingBean {
      */
     public boolean validateRefreshToken(String refreshToken) {
         try {
-            if (redisService.getValues(refreshToken).equals("delete")) {
-                return false;
-            }
             Jwts.parserBuilder()
                     .setSigningKey(signingKey)
                     .build()

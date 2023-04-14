@@ -1,5 +1,6 @@
 package practice.jpaboard.security.jwt;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.IncorrectClaimException;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import practice.jpaboard.security.SecurityProperties;
 import practice.jpaboard.util.dto.ResponseDto;
@@ -41,24 +43,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
          * 유효 기간 만료를 제외한 예외는 false를 반환하도록 한다. (Slient Refresh)
          */
         try {
-            if (accessToken != null && jwtTokenProvider.validateAccessToken(accessToken)) {
+            if (StringUtils.hasText(accessToken) && jwtTokenProvider.validateAccessToken(accessToken)) {
 
                 Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 log.info("JwtAuthentication.doFilterInternal - Save Authentication In SecurityContext");
+            }
 
-            } else {
+            /*
+            else {
                 //Invalidate SecurityContext
                 SecurityContextHolder.clearContext();
             }
-        } catch (IncorrectClaimException e) { // 잘못된 토큰일 경우
+            */
+        } catch (ExpiredJwtException e) { //만료된 토큰일 경우
             SecurityContextHolder.clearContext();
-            log.debug("Invalid JWT token.");
-            response.sendError(403);
-        } catch (UsernameNotFoundException e) { // 회원을 찾을 수 없을 경우
+            request.setAttribute("Exception", "ExpiredJwtException");
+        } catch (JwtException e) { // 회원을 찾을 수 없을 경우
             SecurityContextHolder.clearContext();
-            log.debug("Can't find user.");
-            response.sendError(403);
+            request.setAttribute("Exception", "JwtException");
         }
 
         filterChain.doFilter(request, response);

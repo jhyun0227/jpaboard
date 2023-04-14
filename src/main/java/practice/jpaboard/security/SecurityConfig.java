@@ -37,17 +37,18 @@ public class SecurityConfig {
                 .formLogin().disable() //form 형식의 로그인이 아닌 restful 사용
                 .httpBasic().disable() //세션을 사용하지 않기 때문에 기본 httpBasic 방식은 보안성 문제로 사용하지 않는다. token을 사용한다는 의미
 
+                //formLogin.disable()을 하면 UsernmaePasswordAuthenticationFilter가 동작을 하지 않는다.
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
 
                 //예외처리
                 .exceptionHandling()
-                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                .accessDeniedHandler(jwtAccessDeniedHandler)
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint) //인증 에러에 대한 처리
+                .accessDeniedHandler(jwtAccessDeniedHandler) //인가 예외에 대한 처리
 
                 //인가 설정
                 .and()
                 .authorizeRequests()
-                .antMatchers("/member/login", "/member/join").permitAll()
+                .antMatchers("/member/login", "/member/join", "/member/reissue").permitAll()
                 .antMatchers("/member/list").hasRole("ADMIN")
                 .anyRequest().authenticated();
 

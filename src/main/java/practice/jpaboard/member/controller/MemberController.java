@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import practice.jpaboard.member.dto.MemberDto;
@@ -61,7 +62,7 @@ public class MemberController {
 
     //============= 로그인 관련 컨트롤러 =============//
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Validated @RequestBody MemberLoginDto memberLoginDto, HttpServletResponse httpServletResponse) {
+    public ResponseEntity<?> login(@Validated @RequestBody MemberLoginDto memberLoginDto) {
         TokenDto tokenDto = memberLoginService.login(memberLoginDto);
 
         //RefreshToken 쿠키 저장
@@ -94,30 +95,47 @@ public class MemberController {
     /**
      * 토큰을 검증하는 메서드
      */
-    @GetMapping("/validate")
-    public ResponseEntity<?> validateAccessToken(@RequestHeader("Authorization") String accessToken) {
-        if (!memberLoginService.accessTokenValidate(accessToken)) {
-            //토큰 유효가 만료되기 전
-            ResponseDto<?> result
-                    = ResponseDto.successDto(StatusCode.SUCCESS, null, "유효한 토큰입니다.");
-            return ResponseEntity.status(HttpStatus.OK).body(result);
-        } else {
-            //토큰의 기한이 만료되었거나, 다른 예외가 발생할 경우 재발급이 필요하다.
-            ResponseDto<?> result
-                    = ResponseDto.successDto(StatusCode.FAIL, null, "토큰 만료, redirection = " + "/reissue");
-
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-    }
+//    @GetMapping("/validate")
+//    public ResponseEntity<?> validateAccessToken(@RequestHeader("Authorization") String accessToken) {
+//        if (!memberLoginService.accessTokenValidate(accessToken)) {
+//            //토큰 유효가 만료되기 전
+//            ResponseDto<?> result
+//                    = ResponseDto.successDto(StatusCode.SUCCESS, null, "유효한 토큰입니다.");
+//            return ResponseEntity.status(HttpStatus.OK).body(result);
+//        } else {
+//            //토큰의 기한이 만료되었거나, 다른 예외가 발생할 경우 재발급이 필요하다.
+//            ResponseDto<?> result
+//                    = ResponseDto.successDto(StatusCode.FAIL, null, "토큰 만료, redirection = " + "/reissue");
+//
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//        }
+//    }
 
     /**
      * 토큰을 재발급 하는 메서드
+     * 1. Access Token이 만료되고 Refresh Token은 만료가 안된 경우 -> Access Token만 재발급
+     * 2. 둘다 만료가 된 경우 -> 로그인 유도 -> data에 null값을 보내서 재로그인 유
      */
     @PostMapping("/reissue")
     public ResponseEntity<?> reissue(@RequestHeader("Authorization") String accessToken,
                                      @CookieValue(name = "Refresh-Token") String refreshToken) {
 
-        memberLoginService.reissueToken()
+        String updatedAccessToken
+                = memberLoginService.reissueToken(accessToken, refreshToken);
 
+        //재발급에 실패하면 전부 /login 유도
+        if (StringUtils.hasText(updatedAccessToken)) {
+            ResponseDto<?> failResult =
+                    ResponseDto.failDto(StatusCode.FAIL, null, "로그인이 만료되었습니다. 다시 로그인해주세요. Redirection URL = " + "/login");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failResult);
+        }
+
+        //정상적으로 재발급
+        ResponseDto<?> successResult =
+                ResponseDto.successDto(StatusCode.SUCCESS, new TokenDto(accessToken, null), "Access Token을 재발급하였습니다.");
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + updatedAccessToken)
+                .body(successResult);
     }
 }

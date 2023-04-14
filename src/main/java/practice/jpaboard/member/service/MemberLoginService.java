@@ -85,28 +85,34 @@ public class MemberLoginService {
             redisService.deleteValues("RT(" + provider + "):" + memberLoginId);
         }
 
-        //AccessToken, RefreshToken 발급 후 Redis에 RefreshToken 저장
-        TokenDto tokenDto = jwtTokenProvider.createToken(memberLoginId, authority);
+        //AccessToken, RefreshToken 발급
+        TokenDto tokenDto =
+                new TokenDto(jwtTokenProvider.createAccessToken(memberLoginId, authority),
+                        jwtTokenProvider.createRefreshToken());
+
+        //Redis에 RefreshToken 저장
         saveRefreshToken(provider, memberLoginId, tokenDto.getRefreshToken());
         return tokenDto;
     }
 
     /**
-     * AccessToken을 재발급하는 메서드
-     * 1. Refresh Token이 유효한지 우선 조회
-     * 2. Refresh Token이 유효하다면 Access Token만 재발급한다.
-     * 3. Refresh Token이 유효하지 않거나 만료되었다면, 재로그인을 유도한다.
+     * 토큰을 재발급 하는 메서드
+     * 1. Access Token이 만료되고 Refresh Token은 만료가 안된 경우 -> Access Token만 재발급
+     * 2. 둘다 만료가 된 경우 -> 로그인 유도
      */
-    public TokenDto reissueToken(String accessToken, String refreshToken) {
+    public String reissueToken(String accessToken, String refreshToken) {
+        //1. Refresh Token 만료 여부 확인
         String resolveAccessToken = resolveAccessToken(accessToken);
+        Authentication authentication = jwtTokenProvider.getAuthentication(resolveAccessToken);
+        UserDetailsImpl userDetailsImpl = (UserDetailsImpl) authentication.getPrincipal();
+        String memberLoginId = userDetailsImpl.getUsername();
 
-        Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
-        String memberLoginId = getUserDetailsName(resolveAccessToken);
+        String refreshTokenInRedis =
+                redisService.getValues("RT(" + SecurityProperties.SERVER + "):" + memberLoginId);
 
-        //조회한 usename으로 redis에 있는 refresh토큰을 조회
-        String refreshTokenInRedis = redisService.getValues("RT(" + SecurityProperties.SERVER + "):" + memberLoginId);
+        //2. 두개의 경우는 null을 반환해서 login을 유도한다.
         if (refreshTokenInRedis == null) {
-            //Redis에 refreshToken이 없을 경우 재로그인을 요청하도록 한다.
+            //토큰이 만료
             return null;
         }
 
@@ -117,14 +123,11 @@ public class MemberLoginService {
             return null;
         }
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
         String authorities = getAuthorities(authentication);
 
         //토큰 재발급 및 Redis 업데이트
         redisService.deleteValues("RT(" + SecurityProperties.SERVER + "):" + memberLoginId); //기존 RefreshToken 삭제
-        TokenDto tokenDto = jwtTokenProvider.createToken(memberLoginId, authorities);
-        saveRefreshToken(SecurityProperties.SERVER, memberLoginId, tokenDto.getRefreshToken());
-        return tokenDto;
+        return jwtTokenProvider.createAccessToken(memberLoginId, authorities);
     }
 
     /**
@@ -147,10 +150,12 @@ public class MemberLoginService {
     /**
      * AccessToken이 만료일자만 초과한 유효한 토큰인지 검사
      */
+    /*
     public boolean accessTokenValidate(String accessToken) {
         String resolveAccessToken = resolveAccessToken(accessToken);
         return jwtTokenProvider.validateAccessTokenOnlyExpired(resolveAccessToken);
     }
+    */
 
     /**
      * AccessToken에서 Bearer 제거후 토큰만 추출하는 메서드
