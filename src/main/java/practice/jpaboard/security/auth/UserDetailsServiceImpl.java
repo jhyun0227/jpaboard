@@ -22,8 +22,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 회원입니다. 아이디를 확인해주세요."));
 
         if (member != null) {
-            UserDetailsImpl userDetails = new UserDetailsImpl(member);
-            return userDetails;
+            return new UserDetailsImpl(member);
         }
 
         return null;
