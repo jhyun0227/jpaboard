@@ -52,24 +52,26 @@ public class MemberLoginService {
      * 1. Redis에서 Refresh Token 삭제
      * 2. Redis에 AccessToken을 key 값으로 'logout'을 value 값으로 등록 만료시간도 함께 저장
      */
-    public void logout(String accessToken, String refreshToken) {
-        //1. accessToken으로 authentication 조회
-        String resolveAccessToken = resolveAccessToken(accessToken);
-        Authentication authentication = jwtTokenProvider.getAuthentication(resolveAccessToken);
-        UserDetailsImpl userDetailsImpl = (UserDetailsImpl) authentication.getPrincipal();
+    public void logout(UserDetailsImpl userDetailsImpl, String accessToken, String refreshToken) {
+        //1.SecurityContextHolder에서 memberLoginId 조회
         String memberLoginId = userDetailsImpl.getUsername();
 
         //2. redis에서 Refresh Token 삭제
         String refreshTokenInRedis
                 = redisService.getValues("RT(" + SecurityProperties.SERVER + "):" + memberLoginId);
 
-        if (refreshTokenInRedis != null) {
+        if (StringUtils.hasText(refreshTokenInRedis) && refreshToken.equals(refreshTokenInRedis)) {
             redisService.deleteValues("RT(" + SecurityProperties.SERVER + "):" + memberLoginId);
         }
 
         //3. redis에 Access Token 저장 with 만료시간
         //Redis 만료시간 = 토큰 만료까지 남은 시간 - 현재 시간
+        String resolveAccessToken = resolveAccessToken(accessToken);
         long expiration = jwtTokenProvider.getTokenExpirationTime(resolveAccessToken) - new Date().getTime();
+
+        log.info("expiration = {}",  expiration);
+        log.info("resolveAccessToken.length = {}", refreshToken.length());
+
         redisService.setValuesWithTimeout(resolveAccessToken,
                 "logout",
                 expiration);
@@ -126,7 +128,6 @@ public class MemberLoginService {
         String authorities = getAuthorities(authentication);
 
         //토큰 재발급 및 Redis 업데이트
-        redisService.deleteValues("RT(" + SecurityProperties.SERVER + "):" + memberLoginId); //기존 RefreshToken 삭제
         return jwtTokenProvider.createAccessToken(memberLoginId, authorities);
     }
 

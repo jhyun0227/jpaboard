@@ -17,6 +17,8 @@ import practice.jpaboard.member.service.RedisService;
 import practice.jpaboard.security.SecurityProperties;
 
 import java.security.Key;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Slf4j
@@ -55,6 +57,13 @@ public class JwtTokenProvider implements InitializingBean {
     public String createAccessToken(String memberLoginId, String authority) {
         Long now = System.currentTimeMillis();
 
+        Date nowDate = new Date(now);
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateString = formatter.format(nowDate);
+
+        log.info("now = {}", now);
+        log.info("dateString = {}", dateString);
+
         return Jwts.builder()
                 .setHeaderParam("typ", "JWT")
                 .setHeaderParam("alg", "HS512")
@@ -63,6 +72,7 @@ public class JwtTokenProvider implements InitializingBean {
                 .claim(SecurityProperties.URL, true)
                 .claim(SecurityProperties.MEMBER_LOGIN_ID, memberLoginId)
                 .claim(SecurityProperties.AUTHORITY_KEY, authority)
+                .claim("issueDate", dateString)
                 .signWith(signingKey, SignatureAlgorithm.HS512)
                 .compact();
     }
@@ -70,11 +80,19 @@ public class JwtTokenProvider implements InitializingBean {
     public String createRefreshToken() {
         Long now = System.currentTimeMillis();
 
+        Date nowDate = new Date(now);
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateString = formatter.format(nowDate);
+
+        log.info("now = {}", now);
+        log.info("dateString = {}", dateString);
+
         return Jwts.builder()
                 .setHeaderParam("typ", "JWT")
                 .setHeaderParam("alg", "HS512")
                 .setExpiration(new Date(now + refreshTokenValidityInMilliseconds))
                 .setSubject("refreshToken")
+                .claim("issueDate", dateString)
                 .signWith(signingKey, SignatureAlgorithm.HS512)
                 .compact();
     }

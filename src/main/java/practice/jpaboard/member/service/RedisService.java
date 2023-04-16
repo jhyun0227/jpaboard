@@ -22,7 +22,7 @@ public class RedisService {
      * 만료시간 설정 -> 자동삭제
      */
     public void setValuesWithTimeout(String key, String value, Long timeout) {
-        redisTemplate.opsForValue().set(key, value, timeout, TimeUnit.MICROSECONDS);
+        redisTemplate.opsForValue().set(key, value, timeout, TimeUnit.MILLISECONDS);
     }
 
     @Transactional(readOnly = true)
