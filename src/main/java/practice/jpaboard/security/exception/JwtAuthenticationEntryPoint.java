@@ -1,5 +1,9 @@
 package practice.jpaboard.security.exception;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
@@ -12,6 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+@Slf4j
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
@@ -28,13 +33,19 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     }
 
     private void setResponse(HttpServletResponse response, String message) throws IOException {
+        int index = message.indexOf("/");
+        String subString = message.substring(index);
+
+        log.info("subString = {}", subString);
+
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.setStatus(401);
+        response.setHeader(HttpHeaders.LOCATION, subString);
 
         ResponseDto<?> result =
                 ResponseDto.failDto(StatusCode.FAIL, null, message);
 
-        response.getWriter().println(result);
+        response.getWriter().write(new ObjectMapper().writeValueAsString(result));
     }
 }

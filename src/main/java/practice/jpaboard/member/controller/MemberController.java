@@ -127,16 +127,18 @@ public class MemberController {
         String updatedAccessToken
                 = memberLoginService.reissueToken(accessToken, refreshToken);
 
+        log.info("updatedAccessToken = {}", updatedAccessToken);
+
         //재발급에 실패하면 전부 /login 유도
         if (!StringUtils.hasText(updatedAccessToken)) {
             ResponseDto<?> failResult =
                     ResponseDto.failDto(StatusCode.FAIL, null, "로그인이 만료되었습니다. 다시 로그인해주세요. Redirection URL = " + "/login");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failResult);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).header(HttpHeaders.LOCATION, "/login").body(failResult);
         }
 
         //정상적으로 재발급
         ResponseDto<?> successResult =
-                ResponseDto.successDto(StatusCode.SUCCESS, new TokenDto(accessToken, null), "Access Token을 재발급하였습니다.");
+                ResponseDto.successDto(StatusCode.SUCCESS, new TokenDto(updatedAccessToken, null), "Access Token을 재발급하였습니다.");
 
         return ResponseEntity.status(HttpStatus.OK)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + updatedAccessToken)
