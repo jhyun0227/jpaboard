@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 import practice.jpaboard.exception.member.MemberError;
 import practice.jpaboard.exception.member.MemberException;
 import practice.jpaboard.member.dto.MemberLoginDto;
+import practice.jpaboard.member.repository.MemberRepository;
 import practice.jpaboard.security.SecurityProperties;
 import practice.jpaboard.security.auth.UserDetailsImpl;
 import practice.jpaboard.security.jwt.JwtTokenProvider;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class MemberLoginService {
 
+    private final MemberRepository memberRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final RedisService redisService;
@@ -38,6 +40,11 @@ public class MemberLoginService {
      * 1. Refresh Token을 Redis에 저장한다.
      */
     public TokenDto login(MemberLoginDto memberLoginDto) {
+        //우선 존재하는 ID인지 확인
+        memberRepository.findByMemberLoginId(memberLoginDto.getMemberLoginId())
+                .orElseThrow(() -> new MemberException(MemberError.NOT_EXIST_MEMBER));
+
+        //다음 비밀번호 확인, 인증되면 토큰 발급까지
         try {
             UsernamePasswordAuthenticationToken authenticationToken
                     = new UsernamePasswordAuthenticationToken(memberLoginDto.getMemberLoginId(), memberLoginDto.getMemberPassword());
@@ -46,14 +53,10 @@ public class MemberLoginService {
             //인증의 역할만 한다.
             Authentication authenticate = authenticationManager.authenticate(authenticationToken);
 
-
             String memberLoginId = authenticate.getName();
             String authorities = getAuthorities(authenticate);
 
             return generateToken(SecurityProperties.SERVER, memberLoginId, authorities);
-        } catch (UsernameNotFoundException e) {
-            //이거 왜 안댐.. ㅠㅠ
-            throw new MemberException(MemberError.NOT_EXIST_MEMBER);
         } catch (BadCredentialsException e) {
             throw new MemberException(MemberError.INVALID_PASSWORD);
         }
