@@ -1,23 +1,18 @@
 package practice.jpaboard.security.jwt;
 
 import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.IncorrectClaimException;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import practice.jpaboard.security.SecurityProperties;
-import practice.jpaboard.util.dto.ResponseDto;
-import practice.jpaboard.util.dto.StatusCode;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -63,6 +58,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.clearContext();
             request.setAttribute("exception", "UsernameNotFoundException");
             request.setAttribute("message", e.getMessage());
+        } catch (AuthenticationException e) {
+            SecurityContextHolder.clearContext();
+            request.setAttribute("exception", "AuthenticationException");
+            request.setAttribute("message", "비밀번호가 일치하지 않습니다. 비밀번호를 다시 확인해주세요. redirect = " + "/login");
         }
 
         filterChain.doFilter(request, response);

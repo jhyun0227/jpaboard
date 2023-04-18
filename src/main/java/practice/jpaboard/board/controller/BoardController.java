@@ -26,8 +26,8 @@ public class BoardController {
     private final BoardService boardService;
 
     @PostMapping("/add")
-    public ResponseEntity<?> addBoard(@RequestBody BoardAddDto boardAddDto, @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        Long boardId = boardService.addBoard(boardAddDto, userDetails);
+    public ResponseEntity<?> addBoard(@RequestBody BoardAddDto boardAddDto, @AuthenticationPrincipal UserDetailsImpl userDetailsImpl) {
+        Long boardId = boardService.addBoard(boardAddDto, userDetailsImpl);
 
         HashMap<String, Long> data = new HashMap<>();
         data.put("boastId", boardId);
