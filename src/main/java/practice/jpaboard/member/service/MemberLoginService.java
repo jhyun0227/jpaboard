@@ -3,13 +3,17 @@ package practice.jpaboard.member.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import practice.jpaboard.exception.member.MemberError;
+import practice.jpaboard.exception.member.MemberException;
 import practice.jpaboard.member.dto.MemberLoginDto;
 import practice.jpaboard.security.SecurityProperties;
 import practice.jpaboard.security.auth.UserDetailsImpl;
@@ -34,17 +38,25 @@ public class MemberLoginService {
      * 1. Refresh Token을 Redis에 저장한다.
      */
     public TokenDto login(MemberLoginDto memberLoginDto) {
-        UsernamePasswordAuthenticationToken authenticationToken
-                = new UsernamePasswordAuthenticationToken(memberLoginDto.getMemberLoginId(), memberLoginDto.getMemberPassword());
+        try {
+            UsernamePasswordAuthenticationToken authenticationToken
+                    = new UsernamePasswordAuthenticationToken(memberLoginDto.getMemberLoginId(), memberLoginDto.getMemberPassword());
 
-        //UserDetailsService.loadUserByUsername() 호출
-        //인증의 역할만 한다.
-        Authentication authenticate = authenticationManager.authenticate(authenticationToken);
+            //UserDetailsService.loadUserByUsername() 호출
+            //인증의 역할만 한다.
+            Authentication authenticate = authenticationManager.authenticate(authenticationToken);
 
-        String memberLoginId = authenticate.getName();
-        String authorities = getAuthorities(authenticate);
 
-        return generateToken(SecurityProperties.SERVER, memberLoginId, authorities);
+            String memberLoginId = authenticate.getName();
+            String authorities = getAuthorities(authenticate);
+
+            return generateToken(SecurityProperties.SERVER, memberLoginId, authorities);
+        } catch (UsernameNotFoundException e) {
+            //이거 왜 안댐.. ㅠㅠ
+            throw new MemberException(MemberError.NOT_EXIST_MEMBER);
+        } catch (BadCredentialsException e) {
+            throw new MemberException(MemberError.INVALID_PASSWORD);
+        }
     }
 
     /**

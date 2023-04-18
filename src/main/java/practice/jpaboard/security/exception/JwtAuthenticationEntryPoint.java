@@ -26,7 +26,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         String message = (String) request.getAttribute("message");
 
         if (!StringUtils.hasText(exception)) {
-            setResponse(response, "유효하지 않은 토큰입니다. Redirection = " + "/login");
+            setResponse(response, "원인을 알수없는 에러. Redirection = " + "/login");
         }
 
         setResponse(response, message);

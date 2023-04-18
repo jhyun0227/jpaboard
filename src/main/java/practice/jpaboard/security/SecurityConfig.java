@@ -53,7 +53,7 @@ public class SecurityConfig {
                 .and()
                 .authorizeRequests()
                 .antMatchers("/member/login", "/member/join", "/member/reissue").permitAll()
-                .antMatchers("/member/list").hasRole("ADMIN")
+//                .antMatchers("/member/list").hasRole("ADMIN")
                 .anyRequest().authenticated();
 
         return http.build();

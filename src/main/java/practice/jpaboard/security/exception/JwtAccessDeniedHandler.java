@@ -1,8 +1,11 @@
 package practice.jpaboard.security.exception;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
+import practice.jpaboard.util.dto.ResponseDto;
+import practice.jpaboard.util.dto.StatusCode;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -14,9 +17,13 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        response.sendError(403);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.setStatus(403);
 
-        //내가 만든 RuntimeException을 발생시키려했지만 좋지 않은 방법
-//        throw new SecurityException(SecurityError.JWT_ACCESS_DENIED_HANDLER);
+        ResponseDto<?> result =
+                ResponseDto.failDto(StatusCode.FAIL, null, "권한이 없습니다.");
+
+        response.getWriter().write(new ObjectMapper().writeValueAsString(result));
     }
 }

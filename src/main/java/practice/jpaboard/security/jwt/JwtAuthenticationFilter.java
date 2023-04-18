@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
          * 인증이 되어 SecurityContextHolder에 SecurityContext가 담기게 된다.
          * 만약 토큰 검증이 되지 않으면 SecurityContext에 authentication 객체가 없기 때문에
          * 엄밀히 말하면 SecurityContextHolder에 해당 요청에 대한 SecurityContext가 없기때문에
-         * 해당 리소스에 접근하려하면 자동으로 반환한다.
+         * 해당 리소스에 접근하려하면 자동으로 반환한다.ㅠ
          *
          */
         try {
@@ -43,25 +43,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 log.info("JwtAuthentication.doFilterInternal - Save Authentication In SecurityContext");
             } else {
-                //Invalidate SecurityContext
                 SecurityContextHolder.clearContext();
             }
-        } catch (ExpiredJwtException e) { //만료된 토큰일 경우
+        } catch (ExpiredJwtException e) {
+            //토큰이 만료된 경우
             SecurityContextHolder.clearContext();
             request.setAttribute("exception", "ExpiredJwtException");
-            request.setAttribute("message", "만료된 토큰입니다. redirect = " + "/reissue");
-        } catch (JwtException e) { // 회원을 찾을 수 없을 경우
+            request.setAttribute("message", "만료된 토큰, redirect = " + "/reissue");
+        } catch (JwtException e) {
+            //토큰이 유효하지 않은 경우
             SecurityContextHolder.clearContext();
             request.setAttribute("exception", "JwtException");
-            request.setAttribute("message", "유효하지 않은 토큰입니다. 다시 로그인해주세요. redirect = " + "/login");
+            request.setAttribute("message", "유효하지 않은 토큰, redirect = " + "/login");
         } catch (UsernameNotFoundException e) {
+            //존재하지 않은 회원
             SecurityContextHolder.clearContext();
             request.setAttribute("exception", "UsernameNotFoundException");
             request.setAttribute("message", e.getMessage());
-        } catch (AuthenticationException e) {
-            SecurityContextHolder.clearContext();
-            request.setAttribute("exception", "AuthenticationException");
-            request.setAttribute("message", "비밀번호가 일치하지 않습니다. 비밀번호를 다시 확인해주세요. redirect = " + "/login");
         }
 
         filterChain.doFilter(request, response);
